@@ -1,0 +1,391 @@
+//use json files
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AbacusGenius 1.0</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: gradientShift 10s ease infinite;
+      padding: 0;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+      50% { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); }
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 15px;
+      animation: fadeInDown 0.8s ease-out;
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    header h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      background: linear-gradient(45deg, #fff, #e0e7ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .connection-status {
+      margin-top: 5px;
+      font-size: 1rem;
+      padding: 6px 12px;
+      border-radius: 25px;
+      display: inline-block;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .connected {
+      background: rgba(0,255,100,0.2);
+      color: #00ff64;
+      border: 2px solid rgba(0,255,100,0.3);
+      box-shadow: 0 0 20px rgba(0,255,100,0.3);
+    }
+
+    .disconnected {
+      background: rgba(255,0,0,0.2);
+      color: #ff4444;
+      border: 2px solid rgba(255,0,0,0.3);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      width: 100%;
+      max-width: 1400px;
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+      padding: 10px;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.2);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1);
+      border-radius: 20px 20px 0 0;
+    }
+
+    .card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    }
+
+    .question-card { grid-column: span 2; text-align: center; }
+
+    h2 {
+      font-size: 1.5rem; margin-bottom: 10px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .current-question {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 15px 0;
+      padding: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      border: 2px dashed rgba(255,255,255,0.3);
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .current-question.has-question {
+      border: 2px solid rgba(0,255,100,0.5);
+      background: rgba(0,255,100,0.1);
+      box-shadow: 0 0 20px rgba(0,255,100,0.2);
+    }
+
+    .status-display {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+    }
+
+    .user-answer, .correct-answer {
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .feedback {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .feedback.correct {
+      color: #00ff64;
+      background: rgba(0,255,100,0.1);
+      border: 1px solid rgba(0,255,100,0.3);
+      animation: pulse 2s infinite;
+    }
+
+    .feedback.incorrect {
+      color: #ff4444;
+      background: rgba(255,68,68,0.1);
+      border: 1px solid rgba(255,68,68,0.3);
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .accuracy-display {
+      font-size: 1.8rem;
+      font-weight: 700;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 10px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      background: rgba(0,0,0,0.3);
+      transform: scale(1.05);
+    }
+
+    .stat-value { font-size: 1.6rem; font-weight: 700; margin-bottom: 3px; }
+    .stat-label { font-size: 0.85rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; background: rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
+    th, td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: center; }
+    th { background: rgba(0,0,0,0.3); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; }
+    tr:hover { background: rgba(255,255,255,0.05); }
+
+    canvas { width: 100% !important; height: auto !important; max-height: 350px; border-radius: 10px; }
+    .waiting-state { opacity: 0.6; font-style: italic; }
+
+    @media (max-width: 768px) {
+      main { grid-template-columns: 1fr; gap: 15px; }
+      .question-card { grid-column: span 1; }
+      .current-question { font-size: 1.8rem; }
+      header h1 { font-size: 2.2rem; }
+      .accuracy-display { font-size: 1.5rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AbacusGenius 1.0</h1>
+    <div id="connectionStatus" class="connection-status disconnected">⚫ Connecting...</div>
+  </header>
+
+  <main>
+    <div class="card question-card">
+      <h2>📚 Current Question</h2>
+      <div id="currentQuestion" class="current-question waiting-state">Waiting for question...</div>
+      <div class="status-display">
+        <div><div class="stat-label">Your Answer</div><div id="userAnswer" class="user-answer">--</div></div>
+        <div id="feedback" class="feedback">Ready to solve!</div>
+        <div><div class="stat-label">Correct Answer</div><div id="correctAnswer" class="correct-answer">--</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📊 Performance Stats</h2>
+      <div style="text-align: center;">
+        <div>Total Accuracy</div>
+        <div id="accuracyDisplay" class="accuracy-display">--%</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item"><div id="totalCorrect" class="stat-value">0</div><div class="stat-label">Correct</div></div>
+        <div class="stat-item"><div id="totalAttempts" class="stat-value">0</div><div class="stat-label">Total</div></div>
+      </div>
+    </div>
+
+    <div class="card"><h2>📈 Progress Chart</h2><canvas id="progressChart"></canvas></div>
+
+    <div class="card" style="grid-column: 1 / -1;">
+      <h2>🕒 Recent Activity</h2>
+      <table>
+        <thead><tr><th>Time</th><th>Question</th><th>Your Answer</th><th>Status</th></tr></thead>
+        <tbody id="historyTable"><tr><td colspan="4" style="opacity:0.6; font-style:italic;">No activity yet...</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const elements = {
+      connectionStatus: document.getElementById("connectionStatus"),
+      currentQuestion: document.getElementById("currentQuestion"),
+      userAnswer: document.getElementById("userAnswer"),
+      correctAnswer: document.getElementById("correctAnswer"),
+      feedback: document.getElementById("feedback"),
+      accuracyDisplay: document.getElementById("accuracyDisplay"),
+      totalCorrect: document.getElementById("totalCorrect"),
+      totalAttempts: document.getElementById("totalAttempts"),
+      historyTable: document.getElementById("historyTable")
+    };
+
+    // === Load saved progress ===
+    let historyData = JSON.parse(localStorage.getItem("abacusHistory")) || [];
+    let totalCorrect = parseInt(localStorage.getItem("abacusCorrect")) || 0;
+    let totalAttempts = parseInt(localStorage.getItem("abacusAttempts")) || 0;
+
+    const ctx = document.getElementById("progressChart").getContext("2d");
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, "rgba(102,126,234,0.6)");
+    gradient.addColorStop(1, "rgba(255,255,255,0.1)");
+
+    const chart = new Chart(ctx, {
+      type: "line",
+      data: { labels: [], datasets: [{ label: "Accuracy %", data: [], borderColor: "#fff", backgroundColor: gradient, fill: true, tension: 0.4, borderWidth: 3, pointBackgroundColor: "#fff", pointBorderColor: "#667eea", pointBorderWidth: 2, pointRadius: 6 }]},
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: "rgba(255,255,255,0.1)" }, ticks: { color: "#fff" } }, x: { grid: { color: "rgba(255,255,255,0.1)" }, ticks: { color: "#fff" } } } }
+    });
+
+    function saveProgress() {
+      localStorage.setItem("abacusHistory", JSON.stringify(historyData));
+      localStorage.setItem("abacusCorrect", totalCorrect);
+      localStorage.setItem("abacusAttempts", totalAttempts);
+    }
+
+    function updateHistoryTable() {
+      if (historyData.length === 0) {
+        elements.historyTable.innerHTML = '<tr><td colspan="4" style="opacity:0.6; font-style:italic;">No activity yet...</td></tr>';
+        return;
+      }
+      elements.historyTable.innerHTML = "";
+      historyData.slice(-10).forEach(item => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${item.time}</td><td>${item.question}</td><td>${item.userAnswer}</td><td style="color:${item.status==="Correct"?"#00ff64":"#ff4444"}; font-weight:600;">${item.status==="Correct"?"✅":"❌"} ${item.status}</td>`;
+        elements.historyTable.appendChild(row);
+      });
+    }
+
+    function updateChart() {
+      if (historyData.length === 0) return;
+      chart.data.labels = historyData.map(h => h.time).slice(-10);
+      chart.data.datasets[0].data = historyData.map(h => h.accuracy).slice(-10);
+      chart.update();
+    }
+
+    function updateStats() {
+      let accuracy = totalAttempts > 0 ? ((totalCorrect/totalAttempts)*100).toFixed(1) : 0;
+      elements.accuracyDisplay.textContent = accuracy + "%";
+      elements.totalCorrect.textContent = totalCorrect;
+      elements.totalAttempts.textContent = totalAttempts;
+      if (accuracy >= 80) elements.accuracyDisplay.style.color="#00ff64";
+      else if (accuracy >= 50) elements.accuracyDisplay.style.color="#ffeb3b";
+      else elements.accuracyDisplay.style.color="#ff4444";
+      saveProgress();
+    }
+
+    function handleMessage(event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type==="question") {
+          elements.currentQuestion.textContent = data.question;
+          elements.currentQuestion.classList.remove("waiting-state");
+          elements.currentQuestion.classList.add("has-question","pulse-animation");
+          elements.userAnswer.textContent="--";
+          elements.correctAnswer.textContent="--";
+          elements.feedback.textContent="Solve using your abacus!";
+          elements.feedback.className="feedback";
+        } else if (data.type==="result") {
+          elements.currentQuestion.classList.remove("pulse-animation");
+          elements.userAnswer.textContent=data.userAnswer;
+          elements.correctAnswer.textContent=data.correctAnswer;
+          const isCorrect = data.correct===true||data.correct==="true";
+          elements.feedback.textContent=isCorrect?"🎉 Excellent!":"❌ Try again!";
+          elements.feedback.className="feedback "+(isCorrect?"correct":"incorrect");
+          totalAttempts++; if(isCorrect) totalCorrect++;
+          const accuracy=((totalCorrect/totalAttempts)*100).toFixed(1);
+          const timestamp = new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+          historyData.push({ time: timestamp, question: data.question, userAnswer: data.userAnswer, status: isCorrect?"Correct":"Incorrect", accuracy:parseFloat(accuracy) });
+          updateHistoryTable(); updateChart(); updateStats();
+        }
+      } catch(err){console.error("Invalid message format:", err,event.data);}
+    }
+
+    function connectWS() {
+      const ws=new WebSocket("ws://192.168.4.1:8884/");
+      ws.onopen=()=>{ elements.connectionStatus.textContent="🟢 Connected"; elements.connectionStatus.className="connection-status connected"; };
+      ws.onclose=()=>{ elements.connectionStatus.textContent="🔴 Disconnected"; elements.connectionStatus.className="connection-status disconnected"; setTimeout(connectWS,3000); };
+      ws.onerror=(err)=>{ console.error("WebSocket error:", err); ws.close(); };
+      ws.onmessage=handleMessage;
+    }
+
+    // === Load UI on start ===
+    updateHistoryTable();
+    updateChart();
+    updateStats();
+    connectWS();
+  </script>
+</body>
+</html>
